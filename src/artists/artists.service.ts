@@ -41,7 +41,6 @@ export class ArtistsService {
 
   update(id: string, updateArtistDto: UpdateArtistDto) {
     if (!validate(id)) {
-      // || updateArtistDto.name || updateArtistDto.grammy !== true && updateArtistDto.grammy !== false) {
       console.log(`update: id '${id}' is invalid`);
       throw new BadRequestException();
     }
@@ -73,13 +72,18 @@ export class ArtistsService {
       console.log(`remove: artist with id '${id}' not found`);
       throw new NotFoundException();
     }
-    Database.Artists.splice(index, 1);
+
     Database.Tracks.forEach((track) => {
       if (track.artistId === id) track.artistId = null;
     });
     Database.Albums.forEach((album) => {
       if (album.artistId === id) album.artistId = null;
     });
+
+    const indexInFavorites = Database.Favorites.artists.indexOf(id);
+    if (index >= 0) Database.Favorites.artists.splice(indexInFavorites, 1);
+
+    Database.Artists.splice(index, 1);
     console.log(`remove: artist with id '${id}' was deleted`);
   }
 }

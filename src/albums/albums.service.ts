@@ -76,10 +76,14 @@ export class AlbumsService {
       console.log(`album remove: album with id '${id}' not found`);
       throw new NotFoundException();
     }
-    Database.Albums.splice(index, 1);
     Database.Tracks.forEach((track) => {
       if (track.albumId === id) track.albumId = null;
     });
+
+    const indexInFavorites = Database.Favorites.albums.indexOf(id);
+    if (index >= 0) Database.Favorites.albums.splice(indexInFavorites, 1);
+
+    Database.Albums.splice(index, 1);
     console.log(`album remove: album with id '${id}' was deleted`);
   }
 }

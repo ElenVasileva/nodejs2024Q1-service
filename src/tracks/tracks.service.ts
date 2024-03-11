@@ -72,7 +72,11 @@ export class TracksService {
       console.log(`remove: track with id '${id}' not found`);
       throw new NotFoundException();
     }
-    console.log(`remove: track with id '${id}' was deleted`);
+
+    const indexInFavorites = Database.Favorites.tracks.indexOf(id);
+    if (index >= 0) Database.Favorites.tracks.splice(indexInFavorites, 1);
+
     Database.Tracks.splice(index, 1);
+    console.log(`remove: track with id '${id}' was deleted`);
   }
 }
