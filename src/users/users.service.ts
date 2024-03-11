@@ -3,12 +3,10 @@ import { v4 as uuidv4, validate } from 'uuid';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
-import { User } from './entities/user.entity';
+import { Database } from 'src/database';
 
 @Injectable()
 export class UsersService {
-  private readonly users: User[] = [];
-
   create(createUserDto: CreateUserDto) {
     if (!createUserDto.login || !createUserDto.password) {
       console.log(`login '${createUserDto.login}' or password '${createUserDto.password}' is incorrect`);
@@ -21,14 +19,14 @@ export class UsersService {
       updatedAt: Date.now(),
       ...createUserDto,
     };
-    this.users.push(newUser);
+    Database.Users.push(newUser);
     console.log(`user '${newUser.login}' with id '${newUser.id}' was created`);
     const { password, ...safeUser } = newUser;
     return safeUser;
   }
 
   findAll() {
-    return this.users;
+    return Database.Users;
   }
 
   findOne(id: string) {
@@ -36,14 +34,14 @@ export class UsersService {
       console.log(`findOne: id '${id}' is invalid`);
       throw new BadRequestException();
     }
-    const index = this.users.findIndex((user) => {
+    const index = Database.Users.findIndex((user) => {
       return user.id === id;
     });
     if (index === -1) {
       console.log(`findOne: user with id '${id}' not found`);
       throw new NotFoundException();
     }
-    return this.users[index];
+    return Database.Users[index];
   }
 
   update(id: string, updateUserDto: UpdatePasswordDto) {
@@ -51,14 +49,14 @@ export class UsersService {
       console.log(`update: id '${id}' is invalid`);
       throw new BadRequestException();
     }
-    const index = this.users.findIndex((user) => {
+    const index = Database.Users.findIndex((user) => {
       return user.id === id;
     });
     if (index === -1) {
       console.log(`update: user with id '${id}' not found`);
       throw new NotFoundException();
     }
-    const oldUser = this.users[index];
+    const oldUser = Database.Users[index];
     if (oldUser.password === updateUserDto.oldPassword) {
       oldUser.version++;
       oldUser.updatedAt = Date.now();
@@ -76,7 +74,7 @@ export class UsersService {
       console.log(`id '${id}' is invalid`);
       throw new BadRequestException();
     }
-    const index = this.users.findIndex((user) => {
+    const index = Database.Users.findIndex((user) => {
       return user.id === id;
     });
     if (index === -1) {
@@ -84,6 +82,6 @@ export class UsersService {
       throw new NotFoundException();
     }
     console.log(`remove: user with id '${id}' was deleted`);
-    this.users.splice(index, 1);
+    Database.Users.splice(index, 1);
   }
 }

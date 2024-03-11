@@ -2,12 +2,10 @@ import { v4 as uuidv4, validate } from 'uuid';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
-import { Artist } from './entities/artist.entity';
+import { Database } from 'src/database';
 
 @Injectable()
 export class ArtistsService {
-  private readonly artists: Artist[] = [];
-
   create(createArtistDto: CreateArtistDto) {
     if (!createArtistDto.name || (createArtistDto.grammy !== false && createArtistDto.grammy !== true)) {
       console.log(`name '${createArtistDto.name}' or grammy '${createArtistDto.grammy}' is incorrect`);
@@ -17,13 +15,13 @@ export class ArtistsService {
       id: uuidv4(),
       ...createArtistDto,
     };
-    this.artists.push(newArtist);
+    Database.Artists.push(newArtist);
     console.log(`artist '${newArtist.name}' with id '${newArtist.id}' was created`);
     return newArtist;
   }
 
   findAll() {
-    return this.artists;
+    return Database.Artists;
   }
 
   findOne(id: string) {
@@ -31,14 +29,14 @@ export class ArtistsService {
       console.log(`findOne: id '${id}' is invalid`);
       throw new BadRequestException();
     }
-    const index = this.artists.findIndex((artist) => {
+    const index = Database.Artists.findIndex((artist) => {
       return artist.id === id;
     });
     if (index === -1) {
       console.log(`findOne: artist with id '${id}' not found`);
       throw new NotFoundException();
     }
-    return this.artists[index];
+    return Database.Artists[index];
   }
 
   update(id: string, updateArtistDto: UpdateArtistDto) {
@@ -51,16 +49,16 @@ export class ArtistsService {
       console.log(`update: name '${updateArtistDto.name}' or grammy '${updateArtistDto.grammy}' is invalid`);
       throw new BadRequestException();
     }
-    const index = this.artists.findIndex((artist) => {
+    const index = Database.Artists.findIndex((artist) => {
       return artist.id === id;
     });
     if (index === -1) {
       console.log(`update: artist with id '${id}' not found`);
       throw new NotFoundException();
     }
-    const oldArtist = this.artists[index];
-    this.artists[index] = { ...oldArtist, ...updateArtistDto };
-    return this.artists[index];
+    const oldArtist = Database.Artists[index];
+    Database.Artists[index] = { ...oldArtist, ...updateArtistDto };
+    return Database.Artists[index];
   }
 
   remove(id: string) {
@@ -68,14 +66,20 @@ export class ArtistsService {
       console.log(`id '${id}' is invalid`);
       throw new BadRequestException();
     }
-    const index = this.artists.findIndex((artist) => {
+    const index = Database.Artists.findIndex((artist) => {
       return artist.id === id;
     });
     if (index === -1) {
       console.log(`remove: artist with id '${id}' not found`);
       throw new NotFoundException();
     }
+    Database.Artists.splice(index, 1);
+    Database.Tracks.forEach((track) => {
+      if (track.artistId === id) track.artistId = null;
+    });
+    Database.Albums.forEach((album) => {
+      if (album.artistId === id) album.artistId = null;
+    });
     console.log(`remove: artist with id '${id}' was deleted`);
-    this.artists.splice(index, 1);
   }
 }
