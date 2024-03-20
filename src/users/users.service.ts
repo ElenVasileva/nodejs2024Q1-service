@@ -1,87 +1,90 @@
-import { v4 as uuidv4, validate } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
-import { Database } from 'src/database';
+import { PrismaClient } from '@prisma/client';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  create(createUserDto: CreateUserDto) {
-    if (!createUserDto.login || !createUserDto.password) {
-      console.log(`login '${createUserDto.login}' or password '${createUserDto.password}' is incorrect`);
-      throw new BadRequestException();
-    }
-    const newUser = {
-      id: uuidv4(),
-      version: 1,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      ...createUserDto,
-    };
-    Database.Users.push(newUser);
-    console.log(`user '${newUser.login}' with id '${newUser.id}' was created`);
-    const { password, ...safeUser } = newUser;
+  prisma = new PrismaClient();
+
+  async create(createUserDto: CreateUserDto) {
+    const dbUser = await this.prisma.user.create({
+      data: {
+        id: uuidv4(),
+        version: 1,
+        ...createUserDto,
+      },
+    });
+    console.log(`user '${dbUser.login}' with id '${dbUser.id}' was created`);
+    const user: User = User.userFromDB(dbUser);
+    const safeUser = User.getSafeUser(user);
     return safeUser;
   }
 
-  findAll() {
-    return Database.Users;
+  async findAll() {
+    return (await this.prisma.user.findMany()).map((dbUser) => {
+      const user: User = User.userFromDB(dbUser);
+      return User.getSafeUser(user);
+    });
   }
 
-  findOne(id: string) {
-    if (!validate(id)) {
-      console.log(`findOne: id '${id}' is invalid`);
-      throw new BadRequestException();
-    }
-    const index = Database.Users.findIndex((user) => {
-      return user.id === id;
+  async findOne(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: id,
+      },
     });
-    if (index === -1) {
+    if (!user) {
       console.log(`findOne: user with id '${id}' not found`);
       throw new NotFoundException();
     }
-    return Database.Users[index];
+    return User.getSafeUser(User.userFromDB(user));
   }
 
-  update(id: string, updateUserDto: UpdatePasswordDto) {
-    if (!validate(id) || !updateUserDto.oldPassword || !updateUserDto.newPassword) {
-      console.log(`update: id '${id}' is invalid`);
-      throw new BadRequestException();
-    }
-    const index = Database.Users.findIndex((user) => {
-      return user.id === id;
+  async update(id: string, updateUserDto: UpdatePasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: id,
+      },
     });
-    if (index === -1) {
+    if (!user) {
       console.log(`update: user with id '${id}' not found`);
       throw new NotFoundException();
     }
-    const oldUser = Database.Users[index];
-    if (oldUser.password === updateUserDto.oldPassword) {
-      oldUser.version++;
-      oldUser.updatedAt = Date.now();
-      oldUser.password = updateUserDto.newPassword;
-      console.log(`password for user '${oldUser.login}' with id '${oldUser.id}' was updated`);
+    if (user.password === updateUserDto.oldPassword) {
+      const newUser = await this.prisma.user.update({
+        where: { id: id },
+        data: {
+          ...user,
+          updatedAt: new Date(),
+          version: user.version + 1,
+          password: updateUserDto.newPassword,
+        },
+      });
+      return User.getSafeUser(User.userFromDB(newUser));
     } else {
       throw new ForbiddenException();
     }
-    const { password, ...safeUser } = oldUser;
-    return safeUser;
   }
 
-  remove(id: string) {
-    if (!validate(id)) {
-      console.log(`id '${id}' is invalid`);
-      throw new BadRequestException();
-    }
-    const index = Database.Users.findIndex((user) => {
-      return user.id === id;
+  async remove(id: string) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id: id,
+      },
     });
-    if (index === -1) {
+    if (!user) {
       console.log(`remove: user with id '${id}' not found`);
       throw new NotFoundException();
     }
     console.log(`remove: user with id '${id}' was deleted`);
-    Database.Users.splice(index, 1);
+    await this.prisma.user.delete({
+      where: {
+        id: id,
+      },
+    });
   }
 }
