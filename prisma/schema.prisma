@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -20,4 +20,10 @@ model User {
   version   Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Artist {
+  id      String   @unique
+  name    String
+  grammy  Boolean
 }

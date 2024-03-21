@@ -8,7 +8,7 @@ import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  prisma = new PrismaClient();
+  constructor(private readonly prisma: PrismaClient) {}
 
   async create(createUserDto: CreateUserDto) {
     const dbUser = await this.prisma.user.create({
@@ -19,16 +19,16 @@ export class UsersService {
       },
     });
     console.log(`user '${dbUser.login}' with id '${dbUser.id}' was created`);
-    const user: User = User.userFromDB(dbUser);
-    const safeUser = User.getSafeUser(user);
-    return safeUser;
+    return User.getSafeUser(User.userFromDB(dbUser));
   }
 
   async findAll() {
-    return (await this.prisma.user.findMany()).map((dbUser) => {
+    const list = (await this.prisma.user.findMany()).map((dbUser) => {
       const user: User = User.userFromDB(dbUser);
       return User.getSafeUser(user);
     });
+    console.log(`findAll: find ${list.length} users`);
+    return list;
   }
 
   async findOne(id: string) {
@@ -64,6 +64,7 @@ export class UsersService {
           password: updateUserDto.newPassword,
         },
       });
+      console.log(`password for user '${user.login}' with id '${user.id}' was updated`);
       return User.getSafeUser(User.userFromDB(newUser));
     } else {
       throw new ForbiddenException();
@@ -71,7 +72,7 @@ export class UsersService {
   }
 
   async remove(id: string) {
-    const user = await this.prisma.user.findFirst({
+    const user = await this.prisma.user.findUnique({
       where: {
         id: id,
       },
@@ -80,11 +81,11 @@ export class UsersService {
       console.log(`remove: user with id '${id}' not found`);
       throw new NotFoundException();
     }
-    console.log(`remove: user with id '${id}' was deleted`);
     await this.prisma.user.delete({
       where: {
         id: id,
       },
     });
+    console.log(`remove: user with id '${id}' was deleted`);
   }
 }

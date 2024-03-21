@@ -1,13 +1,13 @@
-import { Controller, Get, Post, Param, Delete, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Param, Delete, HttpStatus, HttpCode, ParseUUIDPipe } from '@nestjs/common';
 import { FavoritesService } from './favorites.service';
 
 @Controller('favs')
 export class FavoritesController {
-  constructor(private readonly favoritesService: FavoritesService) { }
+  constructor(private readonly favoritesService: FavoritesService) {}
 
   @Post(':entityType/:id')
   @HttpCode(HttpStatus.CREATED)
-  create(@Param('entityType') entityType: string, @Param('id') id: string) {
+  create(@Param('entityType') entityType: string, @Param('id', ParseUUIDPipe) id: string) {
     return this.favoritesService.create(entityType, id);
   }
 
@@ -19,7 +19,7 @@ export class FavoritesController {
 
   @Delete(':entityType/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('entityType') entityType: string, @Param('id') id: string) {
+  remove(@Param('entityType') entityType: string, @Param('id', ParseUUIDPipe) id: string) {
     return this.favoritesService.remove(entityType, id);
   }
 }

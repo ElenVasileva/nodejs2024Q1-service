@@ -79,4 +79,8 @@ export class TracksService {
     Database.Tracks.splice(index, 1);
     console.log(`remove: track with id '${id}' was deleted`);
   }
+
+  removeArtistLink(id: string) {
+    console.log(`isn't implemented yet`);
+  }
 }

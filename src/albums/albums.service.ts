@@ -86,4 +86,8 @@ export class AlbumsService {
     Database.Albums.splice(index, 1);
     console.log(`album remove: album with id '${id}' was deleted`);
   }
+
+  removeArtistLink(id: string) {
+    console.log(`isn't implemented yet`);
+  }
 }
