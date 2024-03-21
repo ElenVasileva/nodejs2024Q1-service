@@ -51,13 +51,14 @@ export class ArtistsService {
       throw new NotFoundException();
     }
 
-    const newArtist = await this.prisma.artist.update({
+    const updatedArtist = await this.prisma.artist.update({
       where: { id: id },
       data: {
         ...updateArtistDto,
       },
     });
-    return newArtist;
+    console.log(`update: artist with id '${id}' and name '${updatedArtist.name}' updated`);
+    return updatedArtist;
   }
 
   async remove(id: string) {

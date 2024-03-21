@@ -1,86 +1,86 @@
-import { v4 as uuidv4, validate } from 'uuid';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
-import { Database } from 'src/database';
+import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class TracksService {
-  create(createTrackDto: CreateTrackDto) {
-    if (!createTrackDto.name || (!createTrackDto.duration && createTrackDto.duration !== 0)) {
-      console.log(`name '${createTrackDto.name}' or duration '${createTrackDto.duration}' is incorrect`);
-      throw new BadRequestException();
-    }
-    const newTrack = {
-      id: uuidv4(),
-      ...createTrackDto,
-    };
-    Database.Tracks.push(newTrack);
-    console.log(`track '${newTrack.name}' with id '${newTrack.id}' was created`);
-    return newTrack;
-  }
+  constructor(private readonly prisma: PrismaClient) {}
 
-  findAll() {
-    return Database.Tracks;
-  }
-
-  findOne(id: string) {
-    if (!validate(id)) {
-      console.log(`findOne: id '${id}' is invalid`);
-      throw new BadRequestException();
-    }
-    const index = Database.Tracks.findIndex((track) => {
-      return track.id === id;
+  async create(createTrackDto: CreateTrackDto) {
+    const track = await this.prisma.track.create({
+      data: {
+        id: uuidv4(),
+        ...createTrackDto,
+      },
     });
-    if (index === -1) {
+    console.log(`track '${track.name}' with id '${track.id}' was created`);
+    return track;
+  }
+
+  async findAll() {
+    const list = await this.prisma.track.findMany();
+    console.log(`findAll: find ${list.length} tracks`);
+    return list;
+  }
+
+  async findOne(id: string) {
+    const track = await this.prisma.track.findUnique({
+      where: {
+        id: id,
+      },
+    });
+    if (!track) {
       console.log(`findOne: track with id '${id}' not found`);
       throw new NotFoundException();
     }
-    return Database.Tracks[index];
+    return track;
   }
 
-  update(id: string, updateTrackDto: UpdateTrackDto) {
-    if (!validate(id)) {
-      console.log(`update: id '${id}' is invalid`);
-      throw new BadRequestException();
-    }
-    if (!updateTrackDto.name || (!updateTrackDto.duration && updateTrackDto.duration !== 0)) {
-      console.log(`update: name '${updateTrackDto.name}' or duration '${updateTrackDto.duration}' is invalid`);
-      throw new BadRequestException();
-    }
-    const index = Database.Tracks.findIndex((track) => {
-      return track.id === id;
+  async update(id: string, updateTrackDto: UpdateTrackDto) {
+    const track = await this.prisma.track.findUnique({
+      where: {
+        id: id,
+      },
     });
-    if (index === -1) {
+    if (!track) {
       console.log(`update: track with id '${id}' not found`);
       throw new NotFoundException();
     }
-    const oldTrack = Database.Tracks[index];
-    Database.Tracks[index] = { ...oldTrack, ...updateTrackDto };
-    return Database.Tracks[index];
+    const updatedTrack = await this.prisma.track.update({
+      where: { id: id },
+      data: {
+        ...updateTrackDto,
+      },
+    });
+    console.log(`update: track with id '${id}' and name '${updatedTrack.name}' updated`);
+    return updatedTrack;
   }
 
-  remove(id: string) {
-    if (!validate(id)) {
-      console.log(`id '${id}' is invalid`);
-      throw new BadRequestException();
-    }
-    const index = Database.Tracks.findIndex((track) => {
-      return track.id === id;
+  async remove(id: string) {
+    const track = await this.prisma.track.findUnique({
+      where: {
+        id: id,
+      },
     });
-    if (index === -1) {
+    if (!track) {
       console.log(`remove: track with id '${id}' not found`);
       throw new NotFoundException();
     }
 
-    const indexInFavorites = Database.Favorites.tracks.indexOf(id);
-    if (index >= 0) Database.Favorites.tracks.splice(indexInFavorites, 1);
-
-    Database.Tracks.splice(index, 1);
+    await this.prisma.track.delete({
+      where: {
+        id: id,
+      },
+    });
     console.log(`remove: track with id '${id}' was deleted`);
   }
 
-  removeArtistLink(id: string) {
+  async removeArtistLink(id: string) {
+    console.log(`isn't implemented yet`);
+  }
+  async removeAlbumLink(id: string) {
     console.log(`isn't implemented yet`);
   }
 }
