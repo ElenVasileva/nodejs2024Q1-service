@@ -5,10 +5,11 @@ import { UpdateArtistDto } from './dto/update-artist.dto';
 import { TracksService } from 'src/tracks/tracks.service';
 import { AlbumsService } from 'src/albums/albums.service';
 import { PrismaClient } from '@prisma/client';
+import { FavoritesService } from 'src/favorites/favorites.service';
 
 @Injectable()
 export class ArtistsService {
-  constructor(private readonly prisma: PrismaClient, private readonly trackService: TracksService, private readonly albumService: AlbumsService) {}
+  constructor(private readonly prisma: PrismaClient, private readonly trackService: TracksService, private readonly albumService: AlbumsService, private readonly favoriteService: FavoritesService) {}
 
   async create(createArtistDto: CreateArtistDto) {
     const artist = await this.prisma.artist.create({
@@ -71,6 +72,8 @@ export class ArtistsService {
       console.log(`remove: artist with id '${id}' not found`);
       throw new NotFoundException();
     }
+
+    this.favoriteService.remove('artist', id);
     this.albumService.removeArtistLink(id);
     this.trackService.removeArtistLink(id);
     await this.prisma.artist.delete({

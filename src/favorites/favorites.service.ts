@@ -1,78 +1,65 @@
-import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { Database } from 'src/database';
-import { validate } from 'uuid';
+import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+import { Album } from 'src/albums/entities/album.entity';
+import { Artist } from 'src/artists/entities/artist.entity';
+import { Track } from 'src/tracks/entities/track.entity';
 
 @Injectable()
 export class FavoritesService {
-  private getDbDataByType(entityType: string) {
-    switch (entityType) {
-      case 'artist':
-        return {
-          existingIds: Database.Artists.map((artist) => {
-            return artist.id;
-          }),
-          favoriteIds: Database.Favorites.artists,
-        };
-      case 'album':
-        return {
-          existingIds: Database.Albums.map((album) => {
-            return album.id;
-          }),
-          favoriteIds: Database.Favorites.albums,
-        };
-      case 'track':
-        return {
-          existingIds: Database.Tracks.map((track) => {
-            return track.id;
-          }),
-          favoriteIds: Database.Favorites.tracks,
-        };
+  constructor(private readonly prisma: PrismaClient) {}
+
+  async create(entityType: string, id: string) {
+    try {
+      if (entityType === 'track') {
+        await this.prisma.favoriteTrack.create({ data: { trackId: id } });
+      }
+      if (entityType === 'album') {
+        await this.prisma.favoriteAlbum.create({ data: { albumId: id } });
+      }
+      if (entityType === 'artist') {
+        await this.prisma.favoriteArtist.create({ data: { artistId: id } });
+      }
+      console.log(`add favorite: ${entityType} with id '${id}' has added`);
+    } catch {
+      throw new UnprocessableEntityException();
     }
   }
 
-  create(entityType: string, id: string) {
-    if (!validate(id)) {
-      console.log(`add favorite: id '${id}' is invalid`);
-      throw new BadRequestException();
-    }
-    const { existingIds: existingIds, favoriteIds } = this.getDbDataByType(entityType);
-    if (existingIds.indexOf(id) === -1) throw new UnprocessableEntityException();
-    favoriteIds.push(id);
-    console.log(`add favorite: ${entityType} with id '${id}' has added`);
-  }
+  async findAll(): Promise<{ artists: Artist[]; albums: Album[]; tracks: Track[] }> {
+    const artists = (
+      await this.prisma.favoriteArtist.findMany({
+        select: { artist: true },
+      })
+    ).map((d) => d.artist);
 
-  findAll() {
-    const favoriteIds = Database.Favorites;
-    const artists = favoriteIds.artists.map((id) => {
-      return Database.Artists.find((artist) => {
-        return artist.id === id;
-      });
-    });
-    const albums = favoriteIds.albums.map((id) => {
-      return Database.Albums.find((album) => {
-        return album.id === id;
-      });
-    });
-    const tracks = favoriteIds.tracks.map((id) => {
-      return Database.Tracks.find((track) => {
-        return track.id === id;
-      });
-    });
-    console.log('get all faforites');
+    const albums = (
+      await this.prisma.favoriteAlbum.findMany({
+        select: { album: true },
+      })
+    ).map((d) => d.album);
+
+    const tracks = (
+      await this.prisma.favoriteTrack.findMany({
+        select: { track: true },
+      })
+    ).map((d) => d.track);
+
+    console.log('get all favorites');
     return { artists, albums, tracks };
   }
 
-  remove(entityType: string, id: string) {
+  async remove(entityType: string, id: string) {
     console.log(`remove favorite: ${entityType} with id '${id}'`);
-    if (!validate(id)) {
-      console.log(`remove favorite: id '${id}' is invalid`);
-      throw new BadRequestException();
-    }
-    const { existingIds: existingIds, favoriteIds } = this.getDbDataByType(entityType);
-    if (existingIds.indexOf(id) === -1) throw new UnprocessableEntityException();
 
-    const index = favoriteIds.indexOf(id);
-    if (index >= 0) favoriteIds.splice(index, 1);
+    if (entityType === 'track') {
+      await this.prisma.favoriteTrack.deleteMany({ where: { trackId: id } });
+    }
+    if (entityType === 'album') {
+      await this.prisma.favoriteAlbum.deleteMany({ where: { albumId: id } });
+    }
+    if (entityType === 'artist') {
+      await this.prisma.favoriteArtist.deleteMany({ where: { artistId: id } });
+    }
     console.log(`remove favorite: ${entityType} with id '${id}' has removed`);
   }
 }

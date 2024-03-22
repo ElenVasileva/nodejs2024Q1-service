@@ -3,10 +3,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
 import { PrismaClient } from '@prisma/client';
+import { FavoritesService } from 'src/favorites/favorites.service';
 
 @Injectable()
 export class TracksService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient, private readonly favoriteService: FavoritesService) {}
 
   async create(createTrackDto: CreateTrackDto) {
     const track = await this.prisma.track.create({
@@ -69,6 +70,7 @@ export class TracksService {
       throw new NotFoundException();
     }
 
+    this.favoriteService.remove('track', id);
     await this.prisma.track.delete({
       where: {
         id: id,
@@ -78,9 +80,19 @@ export class TracksService {
   }
 
   async removeArtistLink(id: string) {
-    console.log(`isn't implemented yet`);
+    await this.prisma.track.updateMany({
+      where: { artistId: id },
+      data: {
+        artistId: null,
+      },
+    });
   }
   async removeAlbumLink(id: string) {
-    console.log(`isn't implemented yet`);
+    await this.prisma.track.updateMany({
+      where: { albumId: id },
+      data: {
+        albumId: null,
+      },
+    });
   }
 }

@@ -4,10 +4,11 @@ import { UpdateAlbumDto } from './dto/update-album.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaClient } from '@prisma/client';
 import { TracksService } from 'src/tracks/tracks.service';
+import { FavoritesService } from 'src/favorites/favorites.service';
 
 @Injectable()
 export class AlbumsService {
-  constructor(private readonly prisma: PrismaClient, private readonly trackService: TracksService) {}
+  constructor(private readonly prisma: PrismaClient, private readonly trackService: TracksService, private readonly favoriteService: FavoritesService) {}
 
   async create(createAlbumDto: CreateAlbumDto) {
     const newAlbum = await this.prisma.album.create({
@@ -70,6 +71,7 @@ export class AlbumsService {
       throw new NotFoundException();
     }
 
+    this.favoriteService.remove('album', id);
     this.trackService.removeAlbumLink(id);
     await this.prisma.album.delete({
       where: {
@@ -80,6 +82,11 @@ export class AlbumsService {
   }
 
   async removeArtistLink(id: string) {
-    console.log(`isn't implemented yet`);
+    await this.prisma.album.updateMany({
+      where: { artistId: id },
+      data: {
+        artistId: null,
+      },
+    });
   }
 }
