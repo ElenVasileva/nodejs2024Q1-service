@@ -1,0 +1,8 @@
+node_module
+dist
+test
+.git
+.postgres
+Dockerfile.web
+Dockerfile.db
+docker-compose.yml
