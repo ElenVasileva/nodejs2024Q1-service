@@ -1,6 +1,7 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { Album } from 'src/albums/entities/album.entity';
+import { AppLogger } from 'src/appLogger';
 import { Artist } from 'src/artists/entities/artist.entity';
 import { Track } from 'src/tracks/entities/track.entity';
 
@@ -19,7 +20,7 @@ export class FavoritesService {
       if (entityType === 'artist') {
         await this.prisma.favoriteArtist.create({ data: { artistId: id } });
       }
-      console.log(`add favorite: ${entityType} with id '${id}' has added`);
+      AppLogger.info(`add favorite: ${entityType} with id '${id}' has added`);
     } catch {
       throw new UnprocessableEntityException();
     }
@@ -44,12 +45,12 @@ export class FavoritesService {
       })
     ).map((d) => d.track);
 
-    console.log('get all favorites');
+    AppLogger.info('get all favorites');
     return { artists, albums, tracks };
   }
 
   async remove(entityType: string, id: string) {
-    console.log(`remove favorite: ${entityType} with id '${id}'`);
+    AppLogger.info(`remove favorite: ${entityType} with id '${id}'`);
 
     if (entityType === 'track') {
       await this.prisma.favoriteTrack.deleteMany({ where: { trackId: id } });
@@ -60,6 +61,6 @@ export class FavoritesService {
     if (entityType === 'artist') {
       await this.prisma.favoriteArtist.deleteMany({ where: { artistId: id } });
     }
-    console.log(`remove favorite: ${entityType} with id '${id}' has removed`);
+    AppLogger.info(`remove favorite: ${entityType} with id '${id}' has removed`);
   }
 }

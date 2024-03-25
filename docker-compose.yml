@@ -5,12 +5,15 @@ services:
       context: .
       dockerfile: Dockerfile.web
     restart: always
-    command: npm run start:migrate:prod
+    command: npm run start:migrate:dev
+    volumes:
+      - ./src:/app/src
+      - ./logs:/app/dist/logs
     ports:
       - "4000:4000"
     depends_on:
       - postgres
-  postgres:    
+  postgres:
     build:
       context: .
       dockerfile: Dockerfile.db

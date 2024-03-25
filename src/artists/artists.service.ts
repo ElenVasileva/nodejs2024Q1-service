@@ -6,6 +6,7 @@ import { TracksService } from 'src/tracks/tracks.service';
 import { AlbumsService } from 'src/albums/albums.service';
 import { PrismaClient } from '@prisma/client';
 import { FavoritesService } from 'src/favorites/favorites.service';
+import { AppLogger } from 'src/appLogger';
 
 @Injectable()
 export class ArtistsService {
@@ -18,13 +19,13 @@ export class ArtistsService {
         ...createArtistDto,
       },
     });
-    console.log(`artist '${artist.name}' with id '${artist.id}' was created`);
+    AppLogger.info(`artist '${artist.name}' with id '${artist.id}' was created`);
     return artist;
   }
 
   async findAll() {
     const list = await this.prisma.artist.findMany();
-    console.log(`findAll: find ${list.length} artists`);
+    AppLogger.info(`findAll: find ${list.length} artists`);
     return list;
   }
 
@@ -35,7 +36,7 @@ export class ArtistsService {
       },
     });
     if (!artist) {
-      console.log(`findOne: artist with id '${id}' not found`);
+      AppLogger.info(`findOne: artist with id '${id}' not found`);
       throw new NotFoundException();
     }
     return artist;
@@ -48,7 +49,7 @@ export class ArtistsService {
       },
     });
     if (!artist) {
-      console.log(`update: artist with id '${id}' not found`);
+      AppLogger.info(`update: artist with id '${id}' not found`);
       throw new NotFoundException();
     }
 
@@ -58,7 +59,7 @@ export class ArtistsService {
         ...updateArtistDto,
       },
     });
-    console.log(`update: artist with id '${id}' and name '${updatedArtist.name}' updated`);
+    AppLogger.info(`update: artist with id '${id}' and name '${updatedArtist.name}' updated`);
     return updatedArtist;
   }
 
@@ -69,7 +70,7 @@ export class ArtistsService {
       },
     });
     if (!artist) {
-      console.log(`remove: artist with id '${id}' not found`);
+      AppLogger.info(`remove: artist with id '${id}' not found`);
       throw new NotFoundException();
     }
 
@@ -81,6 +82,6 @@ export class ArtistsService {
         id: id,
       },
     });
-    console.log(`remove: artist with id '${id}' was deleted`);
+    AppLogger.info(`remove: artist with id '${id}' was deleted`);
   }
 }

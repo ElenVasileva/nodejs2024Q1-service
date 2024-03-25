@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { PrismaClient } from '@prisma/client';
 import { TracksService } from 'src/tracks/tracks.service';
 import { FavoritesService } from 'src/favorites/favorites.service';
+import { AppLogger } from 'src/appLogger';
 
 @Injectable()
 export class AlbumsService {
@@ -17,13 +18,13 @@ export class AlbumsService {
         ...createAlbumDto,
       },
     });
-    console.log(`album create: album '${newAlbum.name}' with id '${newAlbum.id}' was created`);
+    AppLogger.info(`album create: album '${newAlbum.name}' with id '${newAlbum.id}' was created`);
     return newAlbum;
   }
 
   async findAll() {
     const list = await this.prisma.album.findMany();
-    console.log(`findAll: find ${list.length} tracks`);
+    AppLogger.info(`findAll: find ${list.length} tracks`);
     return list;
   }
 
@@ -34,7 +35,7 @@ export class AlbumsService {
       },
     });
     if (!album) {
-      console.log(`album findOne: album with id '${id}' not found`);
+      AppLogger.info(`album findOne: album with id '${id}' not found`);
       throw new NotFoundException();
     }
     return album;
@@ -47,7 +48,7 @@ export class AlbumsService {
       },
     });
     if (!album) {
-      console.log(`album update: album with id '${id}' not found`);
+      AppLogger.info(`album update: album with id '${id}' not found`);
       throw new NotFoundException();
     }
     const updatedAlbum = await this.prisma.album.update({
@@ -56,7 +57,7 @@ export class AlbumsService {
         ...updateAlbumDto,
       },
     });
-    console.log(`album update: album with id '${id}' and name '${updatedAlbum.name}' updated`);
+    AppLogger.info(`album update: album with id '${id}' and name '${updatedAlbum.name}' updated`);
     return updatedAlbum;
   }
 
@@ -67,7 +68,7 @@ export class AlbumsService {
       },
     });
     if (!album) {
-      console.log(`album remove: album with id '${id}' not found`);
+      AppLogger.info(`album remove: album with id '${id}' not found`);
       throw new NotFoundException();
     }
 
@@ -78,7 +79,7 @@ export class AlbumsService {
         id: id,
       },
     });
-    console.log(`album remove: album with id '${id}' was deleted`);
+    AppLogger.info(`album remove: album with id '${id}' was deleted`);
   }
 
   async removeArtistLink(id: string) {

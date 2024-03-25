@@ -5,6 +5,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { PrismaClient } from '@prisma/client';
 import { User } from './entities/user.entity';
+import { AppLogger } from 'src/appLogger';
 
 @Injectable()
 export class UsersService {
@@ -18,7 +19,7 @@ export class UsersService {
         ...createUserDto,
       },
     });
-    console.log(`user '${dbUser.login}' with id '${dbUser.id}' was created`);
+    AppLogger.info(`user '${dbUser.login}' with id '${dbUser.id}' was created`);
     return User.getSafeUser(User.userFromDB(dbUser));
   }
 
@@ -27,7 +28,7 @@ export class UsersService {
       const user: User = User.userFromDB(dbUser);
       return User.getSafeUser(user);
     });
-    console.log(`findAll: find ${list.length} users`);
+    AppLogger.info(`findAll: find ${list.length} users`);
     return list;
   }
 
@@ -38,7 +39,7 @@ export class UsersService {
       },
     });
     if (!user) {
-      console.log(`findOne: user with id '${id}' not found`);
+      AppLogger.info(`findOne: user with id '${id}' not found`);
       throw new NotFoundException();
     }
     return User.getSafeUser(User.userFromDB(user));
@@ -51,7 +52,7 @@ export class UsersService {
       },
     });
     if (!user) {
-      console.log(`update: user with id '${id}' not found`);
+      AppLogger.info(`update: user with id '${id}' not found`);
       throw new NotFoundException();
     }
     if (user.password === updateUserDto.oldPassword) {
@@ -64,7 +65,7 @@ export class UsersService {
           password: updateUserDto.newPassword,
         },
       });
-      console.log(`password for user '${user.login}' with id '${user.id}' was updated`);
+      AppLogger.info(`password for user '${user.login}' with id '${user.id}' was updated`);
       return User.getSafeUser(User.userFromDB(newUser));
     } else {
       throw new ForbiddenException();
@@ -78,7 +79,7 @@ export class UsersService {
       },
     });
     if (!user) {
-      console.log(`remove: user with id '${id}' not found`);
+      AppLogger.info(`remove: user with id '${id}' not found`);
       throw new NotFoundException();
     }
     await this.prisma.user.delete({
@@ -86,6 +87,6 @@ export class UsersService {
         id: id,
       },
     });
-    console.log(`remove: user with id '${id}' was deleted`);
+    AppLogger.info(`remove: user with id '${id}' was deleted`);
   }
 }

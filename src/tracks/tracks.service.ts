@@ -4,6 +4,7 @@ import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
 import { PrismaClient } from '@prisma/client';
 import { FavoritesService } from 'src/favorites/favorites.service';
+import { AppLogger } from 'src/appLogger';
 
 @Injectable()
 export class TracksService {
@@ -16,13 +17,13 @@ export class TracksService {
         ...createTrackDto,
       },
     });
-    console.log(`track '${track.name}' with id '${track.id}' was created`);
+    AppLogger.info(`track '${track.name}' with id '${track.id}' was created`);
     return track;
   }
 
   async findAll() {
     const list = await this.prisma.track.findMany();
-    console.log(`findAll: find ${list.length} tracks`);
+    AppLogger.info(`findAll: find ${list.length} tracks`);
     return list;
   }
 
@@ -33,7 +34,7 @@ export class TracksService {
       },
     });
     if (!track) {
-      console.log(`findOne: track with id '${id}' not found`);
+      AppLogger.info(`findOne: track with id '${id}' not found`);
       throw new NotFoundException();
     }
     return track;
@@ -46,7 +47,7 @@ export class TracksService {
       },
     });
     if (!track) {
-      console.log(`update: track with id '${id}' not found`);
+      AppLogger.info(`update: track with id '${id}' not found`);
       throw new NotFoundException();
     }
     const updatedTrack = await this.prisma.track.update({
@@ -55,7 +56,7 @@ export class TracksService {
         ...updateTrackDto,
       },
     });
-    console.log(`update: track with id '${id}' and name '${updatedTrack.name}' updated`);
+    AppLogger.info(`update: track with id '${id}' and name '${updatedTrack.name}' updated`);
     return updatedTrack;
   }
 
@@ -66,7 +67,7 @@ export class TracksService {
       },
     });
     if (!track) {
-      console.log(`remove: track with id '${id}' not found`);
+      AppLogger.info(`remove: track with id '${id}' not found`);
       throw new NotFoundException();
     }
 
@@ -76,7 +77,7 @@ export class TracksService {
         id: id,
       },
     });
-    console.log(`remove: track with id '${id}' was deleted`);
+    AppLogger.info(`remove: track with id '${id}' was deleted`);
   }
 
   async removeArtistLink(id: string) {

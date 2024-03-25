@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 
+import { LogPath, AppLogger } from './appLogger';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe());
@@ -14,7 +16,9 @@ async function bootstrap() {
   const port = process.env.PORT || 4000;
 
   await app.listen(port);
-  console.log(`app listens on port ${port}`);
-  console.log(`swagger is here  http://localhost:${port}/doc/`);
+
+  AppLogger.info(`logger is initialized, file is here ${LogPath}`);
+  AppLogger.info(`app listens on port ${port}`);
+  AppLogger.info(`swagger is here  http://localhost:${port}/doc/`);
 }
 bootstrap();
