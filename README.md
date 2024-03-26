@@ -18,6 +18,10 @@ Checkout the branch 'Containerization-and-Database-(PostgreSQL)-&-ORM'
 npm install
 ```
 
+## Create .env file
+
+Create .env file from .env.example and set variables you need 
+
 ## Running application in docker container
 
 ```
