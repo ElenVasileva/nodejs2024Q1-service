@@ -4,28 +4,40 @@
 
 - Git - [Download & Install Git](https://git-scm.com/downloads).
 - Node.js - [Download & Install Node.js](https://nodejs.org/en/download/) and the npm package manager.
+- Docker - [Download & Install Docker](https://www.docker.com/)
 
 ## Downloading
-
+Clone this repository:
 ```
 git clone https://github.com/ElenVasileva/nodejs2024Q1-service.git
 ```
-
+Checkout the branch 'Containerization-and-Database-(PostgreSQL)-&-ORM'
 ## Installing NPM modules
 
 ```
 npm install
 ```
 
-## Running application
+## Create .env file
+
+Create .env file from .env.example and set variables you need:
+```
+DATABASE_URL="postgresql://username:userpassword@postgres:5432/homelibrary?schema=public"
+```
+
+## Running application in docker container
 
 ```
-npm start
+docker compose up
 ```
 
 After starting the app on port (4000 as default) you can open
 in your browser OpenAPI documentation by typing http://localhost:4000/doc/.
 For more information about OpenAPI/Swagger please visit https://swagger.io/.
+
+## Logging
+
+Log file 'combined.log' could be find in the folder 'logs'
 
 ## Testing
 

@@ -6,10 +6,11 @@ import { ArtistsModule } from './artists/artists.module';
 import { TracksModule } from './tracks/tracks.module';
 import { AlbumsModule } from './albums/albums.module';
 import { FavoritesModule } from './favorites/favorites.module';
+import { PrismaClient } from '@prisma/client';
 
 @Module({
   imports: [UsersModule, ArtistsModule, TracksModule, AlbumsModule, FavoritesModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, PrismaClient],
 })
 export class AppModule {}

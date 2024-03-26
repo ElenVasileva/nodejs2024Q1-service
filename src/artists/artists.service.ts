@@ -1,89 +1,87 @@
-import { v4 as uuidv4, validate } from 'uuid';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
-import { Database } from 'src/database';
+import { TracksService } from 'src/tracks/tracks.service';
+import { AlbumsService } from 'src/albums/albums.service';
+import { PrismaClient } from '@prisma/client';
+import { FavoritesService } from 'src/favorites/favorites.service';
+import { AppLogger } from 'src/appLogger';
 
 @Injectable()
 export class ArtistsService {
-  create(createArtistDto: CreateArtistDto) {
-    if (!createArtistDto.name || (createArtistDto.grammy !== false && createArtistDto.grammy !== true)) {
-      console.log(`name '${createArtistDto.name}' or grammy '${createArtistDto.grammy}' is incorrect`);
-      throw new BadRequestException();
-    }
-    const newArtist = {
-      id: uuidv4(),
-      ...createArtistDto,
-    };
-    Database.Artists.push(newArtist);
-    console.log(`artist '${newArtist.name}' with id '${newArtist.id}' was created`);
-    return newArtist;
-  }
+  constructor(private readonly prisma: PrismaClient, private readonly trackService: TracksService, private readonly albumService: AlbumsService, private readonly favoriteService: FavoritesService) {}
 
-  findAll() {
-    return Database.Artists;
-  }
-
-  findOne(id: string) {
-    if (!validate(id)) {
-      console.log(`findOne: id '${id}' is invalid`);
-      throw new BadRequestException();
-    }
-    const index = Database.Artists.findIndex((artist) => {
-      return artist.id === id;
+  async create(createArtistDto: CreateArtistDto) {
+    const artist = await this.prisma.artist.create({
+      data: {
+        id: uuidv4(),
+        ...createArtistDto,
+      },
     });
-    if (index === -1) {
-      console.log(`findOne: artist with id '${id}' not found`);
+    AppLogger.info(`artist '${artist.name}' with id '${artist.id}' was created`);
+    return artist;
+  }
+
+  async findAll() {
+    const list = await this.prisma.artist.findMany();
+    AppLogger.info(`findAll: find ${list.length} artists`);
+    return list;
+  }
+
+  async findOne(id: string) {
+    const artist = await this.prisma.artist.findUnique({
+      where: {
+        id: id,
+      },
+    });
+    if (!artist) {
+      AppLogger.info(`findOne: artist with id '${id}' not found`);
       throw new NotFoundException();
     }
-    return Database.Artists[index];
+    return artist;
   }
 
-  update(id: string, updateArtistDto: UpdateArtistDto) {
-    if (!validate(id)) {
-      console.log(`update: id '${id}' is invalid`);
-      throw new BadRequestException();
-    }
-    if (!updateArtistDto.name || (updateArtistDto.grammy !== true && updateArtistDto.grammy !== false)) {
-      console.log(`update: name '${updateArtistDto.name}' or grammy '${updateArtistDto.grammy}' is invalid`);
-      throw new BadRequestException();
-    }
-    const index = Database.Artists.findIndex((artist) => {
-      return artist.id === id;
+  async update(id: string, updateArtistDto: UpdateArtistDto) {
+    const artist = await this.prisma.artist.findUnique({
+      where: {
+        id: id,
+      },
     });
-    if (index === -1) {
-      console.log(`update: artist with id '${id}' not found`);
-      throw new NotFoundException();
-    }
-    const oldArtist = Database.Artists[index];
-    Database.Artists[index] = { ...oldArtist, ...updateArtistDto };
-    return Database.Artists[index];
-  }
-
-  remove(id: string) {
-    if (!validate(id)) {
-      console.log(`id '${id}' is invalid`);
-      throw new BadRequestException();
-    }
-    const index = Database.Artists.findIndex((artist) => {
-      return artist.id === id;
-    });
-    if (index === -1) {
-      console.log(`remove: artist with id '${id}' not found`);
+    if (!artist) {
+      AppLogger.info(`update: artist with id '${id}' not found`);
       throw new NotFoundException();
     }
 
-    Database.Tracks.forEach((track) => {
-      if (track.artistId === id) track.artistId = null;
+    const updatedArtist = await this.prisma.artist.update({
+      where: { id: id },
+      data: {
+        ...updateArtistDto,
+      },
     });
-    Database.Albums.forEach((album) => {
-      if (album.artistId === id) album.artistId = null;
+    AppLogger.info(`update: artist with id '${id}' and name '${updatedArtist.name}' updated`);
+    return updatedArtist;
+  }
+
+  async remove(id: string) {
+    const artist = await this.prisma.artist.findUnique({
+      where: {
+        id: id,
+      },
     });
+    if (!artist) {
+      AppLogger.info(`remove: artist with id '${id}' not found`);
+      throw new NotFoundException();
+    }
 
-    const indexInFavorites = Database.Favorites.artists.indexOf(id);
-    if (index >= 0) Database.Favorites.artists.splice(indexInFavorites, 1);
-
-    Database.Artists.splice(index, 1);
-    console.log(`remove: artist with id '${id}' was deleted`);
+    this.favoriteService.remove('artist', id);
+    this.albumService.removeArtistLink(id);
+    this.trackService.removeArtistLink(id);
+    await this.prisma.artist.delete({
+      where: {
+        id: id,
+      },
+    });
+    AppLogger.info(`remove: artist with id '${id}' was deleted`);
   }
 }
