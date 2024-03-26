@@ -20,7 +20,10 @@ npm install
 
 ## Create .env file
 
-Create .env file from .env.example and set variables you need 
+Create .env file from .env.example and set variables you need:
+```
+DATABASE_URL="postgresql://username:userpassword@postgres:5432/homelibrary?schema=public"
+```
 
 ## Running application in docker container
 
